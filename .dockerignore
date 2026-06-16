@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+*.swp
+*.swo
+.git/
+.gitignore
+.venv/
+venv/
+ENV/
+env/
+images/
+README.md
