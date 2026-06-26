@@ -12,15 +12,18 @@ app = FastAPI(title="Odometer OCR", version="0.1.0")
 # Load once at startup to avoid reinitializing OCR for each request.
 ocr = PaddleOCR(use_angle_cls=True, lang="en")
 
+
 @dataclass
 class Candidate:
     text: str
     score: float
 
+
 @dataclass
 class TextHit:
     text: str
     score: float
+
 
 def _normalize_text(raw: str) -> str:
     t = raw.strip().replace(" ", "")
@@ -159,7 +162,7 @@ def read_odometer(image_bytes: bytes) -> dict:
     if best is None:
         return {
             "odometer_reading": None,
-            "confidence": 0.0,
+            "odometer_confidence": 0.0,
             "serial_number": serial_number,
             "serial_confidence": serial_confidence,
             "candidates": [],
@@ -170,7 +173,7 @@ def read_odometer(image_bytes: bytes) -> dict:
 
     return {
         "odometer_reading": whole_reading,
-        "confidence": round(best.score, 4),
+        "odometer_confidence": round(best.score, 4),
         "serial_number": serial_number,
         "serial_confidence": serial_confidence,
         "candidates": [

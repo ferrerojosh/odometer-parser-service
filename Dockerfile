@@ -1,26 +1,31 @@
-FROM python:3.11-slim
+FROM ghcr.io/astral-sh/uv:python3.11-trixie-slim AS builder
+ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
+# Omit development dependencies
+ENV UV_NO_DEV=1
+ENV UV_PYTHON_DOWNLOADS=0
 
 WORKDIR /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    --mount=type=bind,source=uv.lock,target=uv.lock \
+    --mount=type=bind,source=pyproject.toml,target=pyproject.toml \
+    uv sync --locked --no-install-project
+COPY . /app
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --locked
 
-# Install system libraries used by OpenCV/PaddleOCR runtime.
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        libglib2.0-0 \
-        libsm6 \
-        libxext6 \
-        libxrender1 \
-        libgomp1 \
-    && rm -rf /var/lib/apt/lists/*
+FROM python:3.11-slim-trixie
 
-COPY requirements.txt ./
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r requirements.txt
+RUN groupadd --system --gid 999 odometer \
+ && useradd --system --gid 999 --uid 999 --create-home odometer
 
-COPY app.py ./
+COPY --from=builder --chown=odometer:odometer /app /app
 
-EXPOSE 8000
+ENV PATH="/app/.venv/bin:$PATH"
+ENV PYTHONUNBUFFERED=1
+
+USER odometer
+
+WORKDIR /app
 
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]

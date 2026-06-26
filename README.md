@@ -5,10 +5,8 @@ Small FastAPI service that accepts an image and returns a best-effort odometer r
 ## 1) Install
 
 ```bash
-python3 -m venv .venv
+uv sync
 source .venv/bin/activate
-pip install --upgrade pip
-pip install -r requirements.txt
 ```
 
 ## 2) Run
@@ -31,9 +29,9 @@ Example response:
 ```json
 {
   "odometer_reading": "125734",
-  "confidence": 0.9471,
+  "odometer_confidence": 0.9471,
   "candidates": [
-    {"text": "125734", "confidence": 0.9471},
+    {"text": "12573", "confidence": 0.9471},
     {"text": "12573", "confidence": 0.8142}
   ]
 }
