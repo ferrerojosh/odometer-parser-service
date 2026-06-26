@@ -16,6 +16,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 
 FROM python:3.11-slim-trixie
 
+RUN apt-get update && apt-get install -y libgl1
 RUN groupadd --system --gid 999 odometer \
  && useradd --system --gid 999 --uid 999 --create-home odometer
 
@@ -27,5 +28,7 @@ ENV PYTHONUNBUFFERED=1
 USER odometer
 
 WORKDIR /app
+
+EXPOSE 8000
 
 CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
