@@ -3,15 +3,30 @@ from dataclasses import dataclass
 from typing import Iterable, List, Optional, Tuple
 
 import cv2
+import paddle
 import numpy as np
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from paddleocr import PaddleOCR
 
-app = FastAPI(title="Odometer OCR", version="0.1.0")
+# Explicitly configure device for headless execution
+if paddle.device.is_compiled_with_cuda():
+    paddle.device.set_device("gpu")
+    print(f"Running on GPU: {paddle.device.get_device()}")
+else:
+    paddle.device.set_device("cpu")
+    print("Running on CPU")
+
+# Run PaddlePaddle's internal diagnostics system 
+try:
+    paddle.utils.run_check()
+    print("\n[SUCCESS] PaddlePaddle 3.x headless configuration is sound!")
+except Exception as e:
+    print(f"\n[ERROR] Diagnostics failed: {e}")
+
+app = FastAPI(title="Odometer OCR", version="1.0.0", description="Extracts odometer readings and serial numbers from images.")
 
 # Load once at startup to avoid reinitializing OCR for each request.
-ocr = PaddleOCR(use_angle_cls=True, lang="en")
-
+ocr = PaddleOCR(use_angle_cls=True, lang="en", enable_mkldnn=False)
 
 @dataclass
 class Candidate:

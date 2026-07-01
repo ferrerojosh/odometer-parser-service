@@ -1,4 +1,5 @@
-FROM ghcr.io/astral-sh/uv:python3.11-trixie-slim AS builder
+FROM ghcr.io/astral-sh/uv:python3.13-trixie-slim
+
 ENV UV_COMPILE_BYTECODE=1 UV_LINK_MODE=copy
 
 # Omit development dependencies
@@ -14,13 +15,17 @@ COPY . /app
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --locked
 
-FROM python:3.11-slim-trixie
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libgl1 \
+    glib2.0 \
+    libgomp1 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN apt-get update && apt-get install -y libgl1
 RUN groupadd --system --gid 999 odometer \
  && useradd --system --gid 999 --uid 999 --create-home odometer
-
-COPY --from=builder --chown=odometer:odometer /app /app
 
 ENV PATH="/app/.venv/bin:$PATH"
 ENV PYTHONUNBUFFERED=1
@@ -31,4 +36,4 @@ WORKDIR /app
 
 EXPOSE 8000
 
-CMD ["uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "--with", "opencv-contrib-python-headless", "--with", "paddleocr", "uvicorn", "app:app", "--host", "0.0.0.0", "--port", "8000"]
